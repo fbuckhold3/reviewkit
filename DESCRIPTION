@@ -1,0 +1,29 @@
+Package: reviewkit
+Title: Shared Data Snapshot and Readiness Gate for Semi-Annual Resident Review
+Version: 0.1.0
+Authors@R:
+    person("Fred", "Buckhold", , "fbuckhold3@icloud.com", role = c("aut", "cre"))
+Description: One snapshot of a resident's review-window data (duty hours,
+    conference attendance, MKSAP, peer reviews, faculty assessments, ITE),
+    built once when the self-evaluation is submitted and read by every later
+    step of the review (coach, second reviewer, CCC), so each step sees the
+    same numbers. Also the data-readiness gate the self-evaluation enforces
+    before submission, and JSON storage for the frozen snapshot. Built on
+    amiontools (schedule, duty hours, attendance) and gmed (RDM loading).
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+Depends: R (>= 4.1)
+Imports:
+    amiontools,
+    dplyr,
+    gmed,
+    jsonlite,
+    tibble
+Remotes:
+    fbuckhold3/amiontools,
+    fbuckhold3/gmed
+Suggests:
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+Config/roxygen2/version: 8.0.0
