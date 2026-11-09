@@ -20,12 +20,6 @@
 #' @export
 SNAPSHOT_SCHEMA_VERSION <- 1L
 
-# Conference "did not attend (reason)" response on the questions form.
-# Proposed field (not in RDM yet, Phase 1 schema change): until it exists,
-# not_attended_days is always 0.
-.NOT_ATTENDED_FIELD <- "q_attended"
-.NOT_ATTENDED_VALUE <- "0"
-
 # Duty statuses that count as a scheduled (non-off) day, and the subset the
 # resident has verified.
 .DUTY_SCHEDULED <- c("confirmed", "entered", "amion_default", "needs_entry")
@@ -80,17 +74,11 @@ SNAPSHOT_SCHEMA_VERSION <- 1L
   )
 }
 
-.conference_block <- function(act, forms, rid, window) {
+.conference_block <- function(act, window) {
   exp_days <- act[act$conf_expected != "None", , drop = FALSE]
 
-  q <- .form_rows(forms, "questions", rid)
-  not_att_dates <- if (!is.null(q) && .NOT_ATTENDED_FIELD %in% names(q)) {
-    unique(.as_date(q$q_date[!is.na(q[[.NOT_ATTENDED_FIELD]]) &
-                             as.character(q[[.NOT_ATTENDED_FIELD]]) == .NOT_ATTENDED_VALUE]))
-  } else as.Date(character())
-
-  not_attended <- exp_days$Date %in% not_att_dates
-  attended     <- exp_days$conf_attended & !not_attended
+  attended     <- exp_days$conf_attended
+  not_attended <- exp_days$conf_not_attended
   n_expected   <- nrow(exp_days)
   n_accounted  <- sum(attended | not_attended)
 
@@ -226,7 +214,7 @@ build_review_snapshot <- function(record_id, forms, activity,
                                    label = window$label),
     built_at                = format(built_at, "%Y-%m-%d %H:%M:%S"),
     duty                    = .duty_block(act, window),
-    conference              = .conference_block(act, forms, rid, window),
+    conference              = .conference_block(act, window),
     mksap                   = .mksap_block(forms, rid, window),
     peer                    = .peer_block(forms, rid, window),
     assessments             = .assessment_block(forms, rid, window),

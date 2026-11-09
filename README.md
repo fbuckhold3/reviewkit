@@ -39,6 +39,9 @@ Strict (blocks submission):
 - **Conference:** every expected conference day (Amion: SLUH or VA) has an
   entry, either attended or "did not attend" with a reason.
 
+A resident with no scheduled days in the window fails both checks: with
+nothing to verify, the gate would otherwise pass.
+
 Nudges (shown with counts, never blocking): MKSAP questions completed (latest
 import), peer reviews completed, faculty evaluations submitted.
 
@@ -65,9 +68,3 @@ Counting rules come from amiontools; this package only counts inside the
 window. `avg_weekly_hours` and the 80-hour flag follow
 `amiontools::summarise_activity()` over the window's weeks, so partial
 first and last weeks count as weeks.
-
-## Pending
-
-- The "did not attend (reason)" response on the RDM `questions` form does
-  not exist yet. The snapshot reads it from `q_attended == "0"` (proposed
-  field name); until the field is added, `not_attended_days` is 0.

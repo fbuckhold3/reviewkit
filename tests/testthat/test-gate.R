@@ -30,3 +30,13 @@ test_that("nudges never block and carry counts", {
   expect_equal(n$value, c(196, 1, 1))
   expect_match(n$detail[1], "2026-10-10 import")
 })
+
+test_that("no schedule fails the gate instead of passing with nothing to check", {
+  s <- build_review_snapshot("999", make_forms(), make_activity(), fixture_window())
+  g <- evaluate_gate(s)
+  expect_false(g$pass)
+  expect_false(g$duty$pass)
+  expect_false(g$conference$pass)
+  expect_match(g$duty$message, "can't find your schedule")
+  expect_true(evaluate_gate(s, gate_rules(require_schedule = FALSE))$pass)
+})

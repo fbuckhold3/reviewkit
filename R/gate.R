@@ -18,11 +18,16 @@
 #'
 #' @param duty_max_unverified Scheduled days allowed to be left unverified.
 #' @param conf_max_unlogged Expected conference days allowed to have no entry.
+#' @param require_schedule Fail the gate when the window has no scheduled
+#'   days. With nothing to check, every count is zero and the gate would
+#'   otherwise pass (e.g. a resident not linked to Amion).
 #' @return A list of thresholds.
 #' @export
-gate_rules <- function(duty_max_unverified = 0L, conf_max_unlogged = 0L) {
+gate_rules <- function(duty_max_unverified = 0L, conf_max_unlogged = 0L,
+                       require_schedule = TRUE) {
   list(duty_max_unverified = duty_max_unverified,
-       conf_max_unlogged   = conf_max_unlogged)
+       conf_max_unlogged   = conf_max_unlogged,
+       require_schedule    = require_schedule)
 }
 
 .plural <- function(n, word) sprintf("%d %s%s", n, word, if (n == 1) "" else "s")
@@ -39,9 +44,12 @@ evaluate_gate <- function(snapshot, rules = gate_rules()) {
   d <- snapshot$duty
   c <- snapshot$conference
 
+  no_schedule <- isTRUE(rules$require_schedule) && d$days_scheduled == 0
   unverified <- d$days_amion_default + d$days_needs_entry
-  duty_pass  <- unverified <= rules$duty_max_unverified
-  duty_msg <- if (duty_pass) {
+  duty_pass  <- !no_schedule && unverified <= rules$duty_max_unverified
+  duty_msg <- if (no_schedule) {
+    "We can't find your schedule for this period, so your data can't be checked. Please contact the program office."
+  } else if (duty_pass) {
     sprintf("Duty hours current: %s verified.", .plural(d$days_verified, "day"))
   } else {
     parts <- c(
@@ -51,8 +59,10 @@ evaluate_gate <- function(snapshot, rules = gate_rules()) {
     sprintf("Duty hours: %s.", paste(parts, collapse = ", "))
   }
 
-  conf_pass <- c$unlogged_days <= rules$conf_max_unlogged
-  conf_msg <- if (conf_pass) {
+  conf_pass <- !no_schedule && c$unlogged_days <= rules$conf_max_unlogged
+  conf_msg <- if (no_schedule) {
+    "Conference: can't be checked without a schedule."
+  } else if (conf_pass) {
     sprintf("Conference log current: %d of %d expected days logged.",
             c$attended_days + c$not_attended_days, c$expected_days)
   } else {

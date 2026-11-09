@@ -4,12 +4,20 @@
 \alias{gate_rules}
 \title{Gate thresholds.}
 \usage{
-gate_rules(duty_max_unverified = 0L, conf_max_unlogged = 0L)
+gate_rules(
+  duty_max_unverified = 0L,
+  conf_max_unlogged = 0L,
+  require_schedule = TRUE
+)
 }
 \arguments{
 \item{duty_max_unverified}{Scheduled days allowed to be left unverified.}
 
 \item{conf_max_unlogged}{Expected conference days allowed to have no entry.}
+
+\item{require_schedule}{Fail the gate when the window has no scheduled
+days. With nothing to check, every count is zero and the gate would
+otherwise pass (e.g. a resident not linked to Amion).}
 }
 \value{
 A list of thresholds.

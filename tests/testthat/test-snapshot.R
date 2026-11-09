@@ -23,13 +23,6 @@ test_that("conference counts separate attended, did-not-attend and unlogged", {
   expect_equal(c$pct_logged, 70)
 })
 
-test_that("without the did-not-attend field, nothing counts as not attended", {
-  f <- make_forms(); f$questions$q_attended <- NULL
-  s <- build_review_snapshot("101", f, make_activity(), fixture_window())
-  expect_equal(s$conference$not_attended_days, 0)
-  expect_equal(s$conference$unlogged_days, 4)
-})
-
 test_that("MKSAP uses the latest import on or before the window end", {
   m <- snap()$mksap
   expect_equal(m$export_date, "2026-10-10")

@@ -19,6 +19,7 @@ make_activity <- function(rid = "101") {
     conf_expected = ifelse(wkend, "None", "SLUH"),
     conf_logged = attended,
     conf_attended = attended,
+    conf_not_attended = seq_along(dates) == wd[7],
     afternoon_school = FALSE,
     duty_status = duty,
     duty_hours = ifelse(wkend, 0, ifelse(duty == "needs_entry", NA, 10)),
@@ -35,7 +36,7 @@ make_forms <- function(rid = "101") {
       record_id = rid, redcap_repeat_instrument = "questions",
       redcap_repeat_instance = 1:2,
       q_date = format(c(wd[7], as.Date("2026-09-15"))),
-      q_attended = c("0", "1"), stringsAsFactors = FALSE),
+      stringsAsFactors = FALSE),
     peer_eval = data.frame(
       record_id = c(rid, rid, "202"), redcap_repeat_instrument = "peer_eval",
       redcap_repeat_instance = 1:3,
