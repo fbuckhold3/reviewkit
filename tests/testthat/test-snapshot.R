@@ -39,8 +39,8 @@ test_that("peer: written by the resident vs received, 9 excluded from means", {
 
 test_that("assessments, faculty evals and ITE", {
   s <- snap()
-  expect_equal(s$assessments$received, 2)
-  expect_equal(s$assessments$with_plus_delta, 1)
+  expect_equal(s$assessments$received, 3)        # Aug 1 counts: evaluations run from Jul 1
+  expect_equal(s$assessments$with_plus_delta, 2)
   expect_equal(s$faculty_evals_submitted, 1)
   expect_equal(s$ite, list(pgy = 2, total_percentile = 70))
 })
@@ -67,3 +67,15 @@ test_that("several snapshots flatten to one row each", {
   expect_equal(tb$duty_days_verified, c(8, 0))
   expect_type(tb$record_id, "character")
 })
+
+test_that("evaluations count from Jul 1, duty and conference from the window start", {
+  f <- make_forms()
+  f$faculty_evaluation <- data.frame(record_id = "101", redcap_repeat_instrument = "faculty_evaluation",
+    redcap_repeat_instance = 1:3, fac_eval_date = c("2026-08-01", "2026-10-05", "2026-06-30"),
+    stringsAsFactors = FALSE)
+  s <- build_review_snapshot("101", f, make_activity(), fixture_window())
+  expect_equal(s$faculty_evals_submitted, 2)   # Aug 1 and Oct 5, not Jun 30
+  expect_equal(s$window$ay_start, "2026-07-01")
+  expect_equal(s$window$start, "2026-10-01")
+})
+

@@ -30,6 +30,8 @@ gate_rules <- function(duty_max_unverified = 0L, conf_max_unlogged = 0L,
        require_schedule    = require_schedule)
 }
 
+.month_day <- function(d) trimws(format(as.Date(d), "%B %e"))
+
 .plural <- function(n, word) sprintf("%d %s%s", n, word, if (n == 1) "" else "s")
 
 #' Check a snapshot against the gate.
@@ -80,8 +82,8 @@ evaluate_gate <- function(snapshot, rules = gate_rules()) {
       if (is.na(m$export_date)) "No MKSAP import yet" else
         sprintf("As of the %s import (%s%% of questions)", m$export_date,
                 format(m$pct_complete)),
-      "This review window",
-      "This review window"
+      sprintf("Since %s", .month_day(snapshot$window$ay_start %||% snapshot$window$start)),
+      sprintf("Since %s", .month_day(snapshot$window$ay_start %||% snapshot$window$start))
     )
   )
 

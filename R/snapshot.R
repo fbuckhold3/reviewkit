@@ -18,7 +18,8 @@
 #' Snapshot format version, stored in every snapshot. Bump it when a field
 #' is added, renamed or redefined, so stored snapshots can be read back.
 #' @export
-SNAPSHOT_SCHEMA_VERSION <- 1L
+# v2 (2026-11-10): evaluation counts run from Jul 1 (window$ay_start).
+SNAPSHOT_SCHEMA_VERSION <- 2L
 
 # Duty statuses that count as a scheduled (non-off) day, and the subset the
 # resident has verified.
@@ -30,6 +31,10 @@ SNAPSHOT_SCHEMA_VERSION <- 1L
 .in_window <- function(dates, window) {
   d <- .as_date(dates)
   !is.na(d) & d >= window$start & d <= window$end
+}
+
+.eval_range <- function(window) {
+  list(start = window$ay_start %||% window$start, end = window$end)
 }
 
 .num <- function(x) suppressWarnings(as.numeric(as.character(x)))
@@ -122,7 +127,7 @@ SNAPSHOT_SCHEMA_VERSION <- 1L
     return(list(completed_by_resident = 0L, received = 0L,
                 received_item_means = as.list(stats::setNames(rep(NA_real_, 5), paste0("item", 1:5)))))
   }
-  p <- p[.in_window(p$peer_date, window), , drop = FALSE]
+  p <- p[.in_window(p$peer_date, .eval_range(window)), , drop = FALSE]
   written  <- p[as.character(p$peer_evaluator_id) == rid, , drop = FALSE]
   received <- p[as.character(p$record_id) == rid, , drop = FALSE]
 
@@ -141,7 +146,7 @@ SNAPSHOT_SCHEMA_VERSION <- 1L
 .assessment_block <- function(forms, rid, window) {
   a <- .form_rows(forms, "assessment", rid)
   if (is.null(a)) return(list(received = 0L, with_plus_delta = 0L))
-  a <- a[.in_window(a$ass_date, window), , drop = FALSE]
+  a <- a[.in_window(a$ass_date, .eval_range(window)), , drop = FALSE]
   has_text <- function(x) !is.na(x) & nzchar(trimws(as.character(x)))
   list(received        = nrow(a),
        with_plus_delta = sum(has_text(a$ass_plus) | has_text(a$ass_delta)))
@@ -150,7 +155,7 @@ SNAPSHOT_SCHEMA_VERSION <- 1L
 .faculty_eval_count <- function(forms, rid, window) {
   f <- .form_rows(forms, "faculty_evaluation", rid)
   if (is.null(f)) return(0L)
-  sum(.in_window(f$fac_eval_date, window))
+  sum(.in_window(f$fac_eval_date, .eval_range(window)))
 }
 
 .ite_block <- function(forms, rid) {
@@ -209,8 +214,9 @@ build_review_snapshot <- function(record_id, forms, activity,
     record_id               = rid,
     name                    = name,
     level                   = level,
-    window                  = list(start = format(window$start),
-                                   end   = format(window$end),
+    window                  = list(start    = format(window$start),
+                                   ay_start = format(window$ay_start %||% window$start),
+                                   end      = format(window$end),
                                    label = window$label),
     built_at                = format(built_at, "%Y-%m-%d %H:%M:%S"),
     duty                    = .duty_block(act, window),

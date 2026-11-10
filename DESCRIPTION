@@ -1,6 +1,6 @@
 Package: reviewkit
 Title: Shared Data Snapshot and Readiness Gate for Semi-Annual Resident Review
-Version: 0.1.0
+Version: 0.2.0
 Authors@R:
     person("Fred", "Buckhold", , "fbuckhold3@icloud.com", role = c("aut", "cre"))
 Description: One snapshot of a resident's review-window data (duty hours,

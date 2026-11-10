@@ -10,7 +10,7 @@ numbers beside it.
 
 ```r
 inputs <- fetch_review_inputs(Sys.getenv("RDM_TOKEN"), Sys.getenv("REDCAP_URL"))
-w      <- review_window()                       # current period start -> yesterday
+w      <- review_window()                       # duty/conference from Oct 1 (AY 2026-27) or Jul 1; evaluations from Jul 1
 snap   <- build_review_snapshot("142", inputs$forms, inputs$activity, w)
 gate   <- evaluate_gate(snap)                    # strict: duty + conference
 gate$pass; gate$duty$message; gate$nudges
@@ -26,9 +26,15 @@ fetches nothing.
 
 ## The window
 
-`review_window(as_of)` runs from the start of the self-evaluation period
-(Oct 1 mid-year, Feb 1 end-of-year, Jul 1 Entering Residency) through the
-day before `as_of`. Pass `lookback_start` to widen it.
+`review_window(as_of)` ends the day before `as_of` and has two starts:
+
+- `start`, for duty hours and conference logging (the gate): Jul 1 of the
+  academic year. AY 2026-27 is the exception: the gate began mid-year, so
+  it counts from Oct 1, 2026 (`FIRST_GATE_START`).
+- `ay_start`, for evaluations (peer reviews, assessments, faculty
+  evaluations written): always Jul 1 of the academic year.
+
+Pass `lookback_start` to override `start`.
 
 ## The gate
 
@@ -48,11 +54,11 @@ import), peer reviews completed, faculty evaluations submitted.
 `gate_rules()` takes tolerances so the rule can be loosened without code
 changes.
 
-## Snapshot fields (schema version 1)
+## Snapshot fields (schema version 2)
 
 | Section | Fields |
 |---|---|
-| top level | `schema_version`, `record_id`, `name`, `level`, `window` (`start`, `end`, `label`), `built_at` |
+| top level | `schema_version`, `record_id`, `name`, `level`, `window` (`start`, `ay_start`, `end`, `label`), `built_at` |
 | `duty` | `days_scheduled`, `days_verified`, `days_amion_default`, `days_needs_entry`, `days_off`, `pct_verified`, `total_hours`, `weeks`, `avg_weekly_hours`, `max_week_hours`, `weeks_flag_80h` |
 | `conference` | `expected_days`, `expected_sluh`, `expected_va`, `attended_days`, `not_attended_days`, `unlogged_days`, `pct_logged`, `pct_attended`, `afternoon_school_days` |
 | `mksap` | `export_date`, `total_questions`, `n_complete`, `pct_complete`, `pct_correct` (latest import on or before the window end) |
