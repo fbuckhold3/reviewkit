@@ -67,6 +67,21 @@ changes.
 | top level | `faculty_evals_submitted` (evaluations the resident wrote) |
 | `ite` | `pgy`, `total_percentile` (latest year with a score) |
 
+## Shared panels (0.3.0)
+
+Display-only Shiny modules, so coach.dash, second review and the CCC show
+the same thing. They use Bootstrap classes only and pick up each app's
+theme. Apps load the data and own every REDCap write.
+
+- `mod_snapshot_panel_ui/server(id, snapshot_r, live_r, override_r, live_status_r)`:
+  the stored snapshot, gate result, any override, and optionally today's
+  numbers beside it. Returns `compare`, the "Compare with today" click;
+  the app builds the live snapshot (about 30 s, so off the main process).
+- `snapshot_rows(snapshot)`: the same rows as a tibble.
+- `build_resident_thread(forms, record_id)`: one dated thread from
+  `coach_interim`, `ccc_review` and each `coach_rev` summary, newest first.
+- `mod_thread_ui/server(id, thread_r)`: shows it.
+
 Milestones are not in the snapshot: the coach, second reviewer and CCC
 change them during the review, so they are read live.
 

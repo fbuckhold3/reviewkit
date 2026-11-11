@@ -9,17 +9,18 @@ review_window(as_of = Sys.Date(), lookback_start = NULL)
 \arguments{
 \item{as_of}{Submission (or "today") date. The window ends the day before.}
 
-\item{lookback_start}{Optional first day of the window. Default: the start
-of the self-evaluation period \code{as_of} falls in (Oct 1 for mid-year,
-Feb 1 for end-of-year, Jul 1 for Entering Residency).}
+\item{lookback_start}{Optional first day of the duty/conference range,
+overriding the default.}
 }
 \value{
-A list: \code{start}, \code{end} (Dates) and \code{label} ("mid", "end" or
-"entering").
+A list: \code{start} (first day for duty hours and conference),
+\code{ay_start} (Jul 1 of the academic year, first day for evaluations),
+\code{end} (Dates) and \code{label} ("mid", "end" or "entering").
 }
 \description{
 Review window for a self-evaluation submitted on \code{as_of}.
 }
 \examples{
-review_window(as.Date("2026-12-01"))  # 2026-10-01 to 2026-11-30, "mid"
+review_window(as.Date("2026-12-01"))  # start 2026-10-01, ay_start 2026-07-01
+review_window(as.Date("2028-03-01"))  # start and ay_start 2027-07-01
 }
