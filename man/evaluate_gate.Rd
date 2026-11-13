@@ -12,8 +12,9 @@ evaluate_gate(snapshot, rules = gate_rules())
 \item{rules}{\code{gate_rules()}.}
 }
 \value{
-A list: \code{pass} (logical, both strict checks), \code{duty} and
-\code{conference} (each \code{pass} + \code{message}), and \code{nudges}, a tibble with
+A list: \code{pass} (logical, all strict checks), \code{duty},
+\code{conference} and \code{faculty} (each \code{pass} + \code{message}; \code{faculty} also
+\code{n} and \code{min}), and \code{nudges}, a tibble with
 \code{item}, \code{value} and \code{detail} for the non-blocking checklist.
 }
 \description{

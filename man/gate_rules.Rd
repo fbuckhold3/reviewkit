@@ -7,7 +7,8 @@
 gate_rules(
   duty_max_unverified = 0L,
   conf_max_unlogged = 0L,
-  require_schedule = TRUE
+  require_schedule = TRUE,
+  fac_eval_min = 10L
 )
 }
 \arguments{
@@ -18,6 +19,9 @@ gate_rules(
 \item{require_schedule}{Fail the gate when the window has no scheduled
 days. With nothing to check, every count is zero and the gate would
 otherwise pass (e.g. a resident not linked to Amion).}
+
+\item{fac_eval_min}{Faculty evaluations the resident must have submitted
+since the start of the academic year. 0 turns the check off.}
 }
 \value{
 A list of thresholds.

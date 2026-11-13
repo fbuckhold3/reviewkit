@@ -76,7 +76,8 @@ snapshot_rows <- function(snapshot) {
     shiny::tags$strong(head),
     shiny::tags$ul(class = "mb-0 mt-1",
       shiny::tags$li(g$duty$message),
-      shiny::tags$li(g$conference$message)
+      shiny::tags$li(g$conference$message),
+      shiny::tags$li(g$faculty$message)
     )
   )
 }

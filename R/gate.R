@@ -1,9 +1,11 @@
 # =============================================================================
 # Data-readiness gate (Fred, 2026-11-04 / 11-06).
 #
-# STRICT on duty hours and conference logging: the self-eval cannot be
-# submitted until both are current for the window. Everything else (MKSAP,
-# peer reviews, faculty evals) is a NUDGE: shown with counts, never blocking.
+# STRICT on duty hours, conference logging and faculty evaluations: the
+# self-eval cannot be submitted until duty and conference are current for the
+# window and at least `fac_eval_min` faculty evaluations have been submitted
+# this academic year (10, Fred 2026-11-12). MKSAP and peer reviews are
+# NUDGES: shown with counts, never blocking.
 #
 # Duty: every scheduled day in the window is confirmed or entered by the
 #   resident (none left on the Amion default, none needing entry).
@@ -21,13 +23,16 @@
 #' @param require_schedule Fail the gate when the window has no scheduled
 #'   days. With nothing to check, every count is zero and the gate would
 #'   otherwise pass (e.g. a resident not linked to Amion).
+#' @param fac_eval_min Faculty evaluations the resident must have submitted
+#'   since the start of the academic year. 0 turns the check off.
 #' @return A list of thresholds.
 #' @export
 gate_rules <- function(duty_max_unverified = 0L, conf_max_unlogged = 0L,
-                       require_schedule = TRUE) {
+                       require_schedule = TRUE, fac_eval_min = 10L) {
   list(duty_max_unverified = duty_max_unverified,
        conf_max_unlogged   = conf_max_unlogged,
-       require_schedule    = require_schedule)
+       require_schedule    = require_schedule,
+       fac_eval_min        = fac_eval_min)
 }
 
 .month_day <- function(d) trimws(format(as.Date(d), "%B %e"))
@@ -38,8 +43,9 @@ gate_rules <- function(duty_max_unverified = 0L, conf_max_unlogged = 0L,
 #'
 #' @param snapshot A `build_review_snapshot()` result.
 #' @param rules `gate_rules()`.
-#' @return A list: `pass` (logical, both strict checks), `duty` and
-#'   `conference` (each `pass` + `message`), and `nudges`, a tibble with
+#' @return A list: `pass` (logical, all strict checks), `duty`,
+#'   `conference` and `faculty` (each `pass` + `message`; `faculty` also
+#'   `n` and `min`), and `nudges`, a tibble with
 #'   `item`, `value` and `detail` for the non-blocking checklist.
 #' @export
 evaluate_gate <- function(snapshot, rules = gate_rules()) {
@@ -72,25 +78,35 @@ evaluate_gate <- function(snapshot, rules = gate_rules()) {
             .plural(c$unlogged_days, "expected day"))
   }
 
+  since <- .month_day(snapshot$window$ay_start %||% snapshot$window$start)
+  fac_min <- as.integer(rules$fac_eval_min %||% 0L)
+  fac_n <- as.integer(snapshot$faculty_evals_submitted %||% 0L)
+  if (is.na(fac_n)) fac_n <- 0L
+  fac_pass <- fac_n >= fac_min
+  fac_msg <- if (fac_pass) {
+    sprintf("Faculty evaluations: %d submitted since %s (%d needed).", fac_n, since, fac_min)
+  } else {
+    sprintf("Faculty evaluations: %d of %d submitted since %s. Complete %d more.",
+            fac_n, fac_min, since, fac_min - fac_n)
+  }
+
   m <- snapshot$mksap
   nudges <- tibble::tibble(
-    item = c("MKSAP questions completed", "Peer reviews completed",
-             "Faculty evaluations submitted"),
-    value = c(m$n_complete, snapshot$peer$completed_by_resident,
-              snapshot$faculty_evals_submitted),
+    item = c("MKSAP questions completed", "Peer reviews completed"),
+    value = c(m$n_complete, snapshot$peer$completed_by_resident),
     detail = c(
       if (is.na(m$export_date)) "No MKSAP import yet" else
         sprintf("As of the %s import (%s%% of questions)", m$export_date,
                 format(m$pct_complete)),
-      sprintf("Since %s", .month_day(snapshot$window$ay_start %||% snapshot$window$start)),
-      sprintf("Since %s", .month_day(snapshot$window$ay_start %||% snapshot$window$start))
+      sprintf("Since %s", since)
     )
   )
 
   list(
-    pass       = duty_pass && conf_pass,
+    pass       = duty_pass && conf_pass && fac_pass,
     duty       = list(pass = duty_pass, message = duty_msg),
     conference = list(pass = conf_pass, message = conf_msg),
+    faculty    = list(pass = fac_pass, message = fac_msg, n = fac_n, min = fac_min),
     nudges     = nudges
   )
 }
