@@ -2,8 +2,8 @@
 % Please edit documentation in R/thread.R
 \name{build_resident_thread}
 \alias{build_resident_thread}
-\title{One resident's dated thread: coach interim notes, CCC reviews and coach
-review summaries, newest first.}
+\title{One resident's dated thread: coach interim notes, CCC reviews, coach
+review takeaways and touch-base check-ins, newest first.}
 \usage{
 build_resident_thread(forms, record_id)
 }
@@ -16,12 +16,12 @@ build_resident_thread(forms, record_id)
 }
 \value{
 A tibble, one row per entry: \code{date}, \code{source} (\code{coach_interim},
-\code{ccc_review} or \code{coach_rev}), \code{title}, \code{author}, \code{text} (list of named
+\code{ccc_review}, \code{coach_rev} or \code{coach_touch}), \code{title}, \code{author}, \code{text} (list of named
 character vectors: section label -> text), \code{tags} (list of character
 vectors, e.g. "Concern", "Flagged for CCC", actions), \code{followup}
 (Date) and \code{instance}. Entries with no date sort last.
 }
 \description{
-One resident's dated thread: coach interim notes, CCC reviews and coach
-review summaries, newest first.
+One resident's dated thread: coach interim notes, CCC reviews, coach
+review takeaways and touch-base check-ins, newest first.
 }

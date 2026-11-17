@@ -4,9 +4,9 @@
 # =============================================================================
 
 .SOURCE_BADGE <- c(coach_interim = "bg-primary", ccc_review = "bg-danger",
-                   coach_rev = "bg-secondary")
+                   coach_rev = "bg-secondary", coach_touch = "bg-info")
 .SOURCE_LABEL <- c(coach_interim = "Coach", ccc_review = "CCC",
-                   coach_rev = "Review")
+                   coach_rev = "Review", coach_touch = "Touch-base")
 
 .thread_entry <- function(row) {
   date <- if (is.na(row$date)) "No date" else trimws(format(row$date, "%b %e, %Y"))

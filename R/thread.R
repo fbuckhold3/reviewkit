@@ -5,7 +5,9 @@
 #   - coach_interim: coach notes outside the semi-annual review
 #   - ccc_review:    CCC reviews, scheduled and interim, with concern,
 #                    actions and action status
-#   - coach_rev:     the coach_summary of each semi-annual review
+#   - coach_rev:     each coach review's takeaway (summary and/or finalized
+#                    ILP) and, after a semi-annual review, the touch-base
+#                    ILP check-in (source "coach_touch")
 #
 # The thread is not tied to a review period. coach.dash, second review and
 # the CCC all read it, so they show the same entries.
@@ -71,15 +73,15 @@
                  instance = integer())
 }
 
-#' One resident's dated thread: coach interim notes, CCC reviews and coach
-#' review summaries, newest first.
+#' One resident's dated thread: coach interim notes, CCC reviews, coach
+#' review takeaways and touch-base check-ins, newest first.
 #'
 #' @param forms Named list of RDM forms with raw codes, as in
 #'   `gmed::load_rdm_complete(raw_or_label = "raw")$all_forms`. Uses
 #'   `coach_interim`, `ccc_review` and `coach_rev` when present.
 #' @param record_id RDM record_id.
 #' @return A tibble, one row per entry: `date`, `source` (`coach_interim`,
-#'   `ccc_review` or `coach_rev`), `title`, `author`, `text` (list of named
+#'   `ccc_review`, `coach_rev` or `coach_touch`), `title`, `author`, `text` (list of named
 #'   character vectors: section label -> text), `tags` (list of character
 #'   vectors, e.g. "Concern", "Flagged for CCC", actions), `followup`
 #'   (Date) and `instance`. Entries with no date sort last.
@@ -145,20 +147,43 @@ build_resident_thread <- function(forms, record_id) {
 
   cr <- .form_rows(forms, "coach_rev", rid)
   if (!is.null(cr) && nrow(cr) > 0) {
-    summ <- .txt(cr$coach_summary)
-    keep <- !is.na(summ)
-    cr <- cr[keep, , drop = FALSE]; summ <- summ[keep]
-    if (nrow(cr) > 0) {
-      period <- .label(cr$coach_period, .PERIOD_LABEL)
+    period <- .label(cr$coach_period, .PERIOD_LABEL)
+    col <- function(f) if (f %in% names(cr)) .txt(cr[[f]]) else rep(NA_character_, nrow(cr))
+
+    # The review itself: its takeaway is the finalized ILP (semi-annual and
+    # graduation reviews) and/or the summary (Entering Residency, interim).
+    rev_text <- lapply(seq_len(nrow(cr)), function(i) .sections(
+      Summary         = col("coach_summary")[i],
+      `Finalized ILP` = col("coach_ilp_final")[i]
+    ))
+    keep <- lengths(rev_text) > 0
+    if (any(keep)) {
       parts[[length(parts) + 1]] <- tibble::tibble(
-        date     = .as_date(cr$coach_date),
+        date     = .as_date(cr$coach_date[keep]),
         source   = "coach_rev",
-        title    = ifelse(is.na(period), "Coach review", paste0("Coach review: ", period)),
+        title    = ifelse(is.na(period[keep]), "Coach review", paste0("Coach review: ", period[keep])),
         author   = "Coach",
-        text     = lapply(summ, function(s) c(Summary = s)),
-        tags     = lapply(seq_len(nrow(cr)), function(i) character()),
+        text     = rev_text[keep],
+        tags     = lapply(which(keep), function(i) character()),
         followup = as.Date(NA),
-        instance = as.integer(cr$redcap_repeat_instance)
+        instance = as.integer(cr$redcap_repeat_instance[keep])
+      )
+    }
+
+    # The touch-base after a semi-annual review: same coach_rev instance,
+    # its own date, its takeaway is the ILP check-in.
+    chk <- col("coach_ilp_checkin")
+    keep <- !is.na(chk)
+    if (any(keep)) {
+      parts[[length(parts) + 1]] <- tibble::tibble(
+        date     = .as_date(col("coach_touch_date")[keep]),
+        source   = "coach_touch",
+        title    = ifelse(is.na(period[keep]), "Coach touch-base", paste0("Coach touch-base: ", period[keep])),
+        author   = "Coach",
+        text     = lapply(chk[keep], function(s) c(`ILP check-in` = s)),
+        tags     = lapply(which(keep), function(i) character()),
+        followup = as.Date(NA),
+        instance = as.integer(cr$redcap_repeat_instance[keep])
       )
     }
   }

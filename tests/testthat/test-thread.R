@@ -25,7 +25,9 @@ thread_forms <- function() {
       record_id = "101", redcap_repeat_instrument = "coach_rev",
       redcap_repeat_instance = 1:2,
       coach_date = c("2026-06-01", "2026-01-10"), coach_period = c("2", "1"),
-      coach_summary = c("Strong year.", ""), stringsAsFactors = FALSE)
+      coach_summary = c("Strong year.", ""),
+      coach_ilp_final = c(NA, ""), coach_ilp_checkin = NA, coach_touch_date = NA,
+      stringsAsFactors = FALSE)
   )
 }
 
@@ -58,6 +60,35 @@ test_that("empty coach summaries are dropped and labels pass through", {
   th <- build_resident_thread(f, "101")
   expect_equal(sum(th$source == "coach_rev"), 1)
   expect_equal(th$title[th$source == "coach_rev"], "Coach review: End Intern")
+})
+
+test_that("finalized ILP is a review takeaway and touch-bases get their own entry", {
+  f <- thread_forms()
+  f$coach_rev$coach_summary <- NA
+  f$coach_rev$coach_ilp_final <- c("Work on PC3.", "Focus on MK1.")
+  f$coach_rev$coach_ilp_checkin <- c(NA, "PC3 going well.")
+  f$coach_rev$coach_touch_date <- c(NA, "2026-03-02")
+  th <- build_resident_thread(f, "101")
+  rev <- th[th$source == "coach_rev", ]
+  expect_equal(nrow(rev), 2)
+  expect_equal(unname(rev$text[[1]]["Finalized ILP"]), "Work on PC3.")
+  tb <- th[th$source == "coach_touch", ]
+  expect_equal(nrow(tb), 1)
+  expect_equal(tb$title, "Coach touch-base: Mid Intern")
+  expect_equal(tb$date, as.Date("2026-03-02"))
+  expect_equal(unname(tb$text[[1]]), "PC3 going well.")
+  # Both a summary and an ILP show as two sections of one entry.
+  f$coach_rev$coach_summary <- c("Strong year.", NA)
+  th <- build_resident_thread(f, "101")
+  expect_equal(names(th$text[th$source == "coach_rev"][[1]]), c("Summary", "Finalized ILP"))
+})
+
+test_that("older coach_rev data without the new fields still works", {
+  f <- thread_forms(); f$coach_rev$coach_ilp_final <- NULL
+  f$coach_rev$coach_ilp_checkin <- NULL; f$coach_rev$coach_touch_date <- NULL
+  th <- build_resident_thread(f, "101")
+  expect_equal(sum(th$source == "coach_rev"), 1)
+  expect_equal(sum(th$source == "coach_touch"), 0)
 })
 
 test_that("missing forms give an empty thread", {
