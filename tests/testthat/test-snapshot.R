@@ -79,3 +79,16 @@ test_that("evaluations count from Jul 1, duty and conference from the window sta
   expect_equal(s$window$start, "2026-10-01")
 })
 
+
+test_that("faculty evaluations written on the submission day count", {
+  w <- review_window(as.Date("2026-11-19"))
+  forms <- list(faculty_evaluation = data.frame(
+    record_id = "476", redcap_repeat_instrument = "faculty_evaluation",
+    redcap_repeat_instance = 1:4,
+    fac_eval_date = c("2026-07-08", "2026-11-18", "2026-11-19", "2026-11-20"),
+    stringsAsFactors = FALSE))
+  expect_equal(w$end, as.Date("2026-11-18"))
+  expect_equal(reviewkit:::.faculty_eval_count(forms, "476", w), 3)   # not the 11-20 one
+  w$as_of <- NULL                                                      # older window: through end
+  expect_equal(reviewkit:::.faculty_eval_count(forms, "476", w), 2)
+})

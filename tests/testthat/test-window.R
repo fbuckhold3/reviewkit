@@ -45,3 +45,7 @@ test_that("a Jul 1 submission closes out the previous academic year", {
   expect_equal(w$end, as.Date("2028-06-30"))
 })
 
+
+test_that("default as_of is the program's date, not the server's", {
+  expect_equal(review_window()$as_of, gmed::program_today())
+})

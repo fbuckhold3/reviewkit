@@ -152,10 +152,15 @@ SNAPSHOT_SCHEMA_VERSION <- 2L
        with_plus_delta = sum(has_text(a$ass_plus) | has_text(a$ass_delta)))
 }
 
+# Faculty evaluations written count through as_of (the submission day), not
+# the day before: the resident does them in the app, often just before
+# submitting. Windows built before as_of existed fall back to end.
 .faculty_eval_count <- function(forms, rid, window) {
   f <- .form_rows(forms, "faculty_evaluation", rid)
   if (is.null(f)) return(0L)
-  sum(.in_window(f$fac_eval_date, .eval_range(window)))
+  r <- .eval_range(window)
+  if (!is.null(window$as_of)) r$end <- as.Date(window$as_of)
+  sum(.in_window(f$fac_eval_date, r))
 }
 
 .ite_block <- function(forms, rid) {

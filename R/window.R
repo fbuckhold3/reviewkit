@@ -12,6 +12,13 @@
 #     started mid-year, so it counts from Oct 1, 2026 (FIRST_GATE_START).
 #   - Evaluations (peer, assessments, faculty evaluations written) count
 #     from Jul 1 of the academic year, every year.
+#   - Faculty evaluations the resident writes count through `as_of` itself
+#     (2026-11-18): they're done in the app, often right before submitting,
+#     so there's no "hasn't had a chance to log it" day to allow for.
+#
+# "Today" is the program's date (gmed::program_today(), Central time), not
+# the server's: Posit Connect runs on UTC, which is already tomorrow after
+# 6 pm Central.
 # =============================================================================
 
 #' First day the gate ever counted (AY 2026-27 started mid-year).
@@ -20,17 +27,18 @@ FIRST_GATE_START <- as.Date("2026-10-01")
 
 #' Review window for a self-evaluation submitted on `as_of`.
 #'
-#' @param as_of Submission (or "today") date. The window ends the day before.
+#' @param as_of Submission (or "today") date, in program time. The window
+#'   ends the day before (faculty evaluations count through `as_of`).
 #' @param lookback_start Optional first day of the duty/conference range,
 #'   overriding the default.
 #' @return A list: `start` (first day for duty hours and conference),
 #'   `ay_start` (Jul 1 of the academic year, first day for evaluations),
-#'   `end` (Dates) and `label` ("mid", "end" or "entering").
+#'   `end`, `as_of` (Dates) and `label` ("mid", "end" or "entering").
 #' @examples
 #' review_window(as.Date("2026-12-01"))  # start 2026-10-01, ay_start 2026-07-01
 #' review_window(as.Date("2028-03-01"))  # start and ay_start 2027-07-01
 #' @export
-review_window <- function(as_of = Sys.Date(), lookback_start = NULL) {
+review_window <- function(as_of = gmed::program_today(), lookback_start = NULL) {
   as_of <- as.Date(as_of)
   if (is.na(as_of)) stop("review_window: as_of is not a valid date")
 
@@ -46,5 +54,5 @@ review_window <- function(as_of = Sys.Date(), lookback_start = NULL) {
   start <- max(ay_start, FIRST_GATE_START)
   if (!is.null(lookback_start)) start <- as.Date(lookback_start)
 
-  list(start = start, ay_start = ay_start, end = end, label = label)
+  list(start = start, ay_start = ay_start, end = end, as_of = as_of, label = label)
 }
